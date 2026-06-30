@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity Web Player | Basket Ball Dunk</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #231F20;
+      }
+      #unity-container {
+        position: fixed;
+        inset: 0;
+        background: #231F20;
+      }
+      #unity-canvas {
+        display: block;
+        position: absolute;
+        background: #231F20;
+      }
+      #unity-footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+      #unity-loading-bar {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        display: none;
+      }
+      #unity-warning {
+        position: absolute;
+        left: 50%;
+        top: 5%;
+        transform: translate(-50%);
+        background: white;
+        padding: 10px;
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas" tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+      <div id="unity-footer">
+        <div id="unity-logo-title-footer"></div>
+        <div id="unity-fullscreen-button"></div>
+        <div id="unity-build-title">Basket Ball Dunk</div>
+      </div>
+    </div>
+    <script>
+      // ── Responsive letterbox ────────────────────────────────────────────────
+      var GAME_ASPECT = 1080 / 1920;
+
+      function resizeCanvas() {
+        var footer = document.getElementById('unity-footer');
+        var canvas = document.getElementById('unity-canvas');
+        var fh     = footer ? footer.offsetHeight : 0;
+        var availW = window.innerWidth;
+        var availH = window.innerHeight - fh;
+        var w, h;
+        if (availW / availH > GAME_ASPECT) {
+          h = availH; w = Math.round(h * GAME_ASPECT);
+        } else {
+          w = availW; h = Math.round(w / GAME_ASPECT);
+        }
+        canvas.style.width  = w + 'px';
+        canvas.style.height = h + 'px';
+        canvas.style.left   = Math.round((availW - w) / 2) + 'px';
+        canvas.style.top    = Math.round((availH - h) / 2) + 'px';
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      // ── Unity banner helper ─────────────────────────────────────────────────
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      // ── Unity build config ──────────────────────────────────────────────────
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/build.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl:      buildUrl + "/build.data",
+        frameworkUrl: buildUrl + "/build.framework.js",
+        codeUrl:      buildUrl + "/build.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName:    "ASN Games",
+        productName:    "Basket Ball Dunk",
+        productVersion: "1.0.0",
+        matchWebGLToCanvasSize: true,
+        showBanner: unityShowBanner,
+      };
+
+      document.querySelector("#unity-loading-bar").style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(document.querySelector("#unity-canvas"), config, (progress) => {
+          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          document.querySelector("#unity-loading-bar").style.display = "none";
+          document.querySelector("#unity-fullscreen-button").onclick = () => {
+            unityInstance.SetFullscreen(1);
+          };
+          resizeCanvas();
+
+          // ── Bridge: tell the parent the game is ready ─────────────────────
+          window.parent.postMessage({ type: 'game:ready' }, '*');
+
+          // ── Bridge: listen for campaign:init from parent ──────────────────
+          window.addEventListener('message', function(event) {
+            var msg = event.data;
+            if (!msg || msg.type !== 'campaign:init') return;
+            var cfg = msg.config || {};
+            if (cfg.ballImage) {
+              unityInstance.SendMessage('Bridge', 'SetBallImage', cfg.ballImage);
+            }
+          });
+
+          // ── Self-test: ?ballTest=1 generates a solid-color circle ─────────
+          if (new URLSearchParams(window.location.search).get('ballTest') === '1') {
+            var size = 256;
+            var c = document.createElement('canvas');
+            c.width = c.height = size;
+            var ctx = c.getContext('2d');
+            // Hot-pink circle on transparent background — easy to spot
+            ctx.clearRect(0, 0, size, size);
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, size / 2 - 4, 0, Math.PI * 2);
+            ctx.fillStyle = '#FF2D78';
+            ctx.fill();
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 8;
+            ctx.stroke();
+            unityInstance.SendMessage('Bridge', 'SetBallImage', c.toDataURL('image/png'));
+          }
+
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
