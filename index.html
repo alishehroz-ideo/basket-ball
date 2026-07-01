@@ -26,12 +26,7 @@
         position: absolute;
         background: #231F20;
       }
-      #unity-footer {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-      }
+
       #unity-loading-bar {
         position: absolute;
         left: 50%;
@@ -60,22 +55,16 @@
         </div>
       </div>
       <div id="unity-warning"> </div>
-      <div id="unity-footer">
-        <div id="unity-logo-title-footer"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">Basket Ball Dunk</div>
-      </div>
+
     </div>
     <script>
       // ── Responsive letterbox ────────────────────────────────────────────────
       var GAME_ASPECT = 1080 / 1920;
 
       function resizeCanvas() {
-        var footer = document.getElementById('unity-footer');
         var canvas = document.getElementById('unity-canvas');
-        var fh     = footer ? footer.offsetHeight : 0;
         var availW = window.innerWidth;
-        var availH = window.innerHeight - fh;
+        var availH = window.innerHeight;
         var w, h;
         if (availW / availH > GAME_ASPECT) {
           h = availH; w = Math.round(h * GAME_ASPECT);
@@ -135,9 +124,7 @@
           document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
         }).then((unityInstance) => {
           document.querySelector("#unity-loading-bar").style.display = "none";
-          document.querySelector("#unity-fullscreen-button").onclick = () => {
-            unityInstance.SetFullscreen(1);
-          };
+
           resizeCanvas();
 
           // ── Bridge: tell the parent the game is ready ─────────────────────
