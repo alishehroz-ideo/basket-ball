@@ -169,6 +169,8 @@
         .then((unityInstance) => {
           setLoadProgress(1);
           document.querySelector("#unity-loading-bar").style.display = "none";
+          var logo = document.querySelector("#unity-logo");
+          if (logo) { logo.style.display = "none"; logo.style.visibility = "hidden"; logo.style.opacity = "0"; }
 
           resizeCanvas();
 
