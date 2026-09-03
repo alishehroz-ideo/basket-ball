@@ -19,12 +19,21 @@
       #unity-container {
         position: fixed;
         inset: 0;
-        background: #0e0e12;   /* clean solid backdrop — no hero panel (matches LapsFuse) */
+        /* Key art, pre-blurred into the JPG (Tools/bake_loading_bg.py) — never a CSS
+           blur, which is far too expensive while the wasm is downloading. `cover`,
+           never `100% 100%`: cover crops, stretch distorts in a letterboxed viewport.
+           #0e0e12 stays underneath as the fallback until the JPG lands, and is what
+           paints the letterbox bars. */
+        background: #0e0e12 url('TemplateData/loading-bg.jpg') center / cover no-repeat;
       }
+      /* Canvas is positioned by JS (letterbox). Must stay TRANSPARENT so the backdrop
+         shows through while loading; Unity fills it once the game renders. !important
+         beats TemplateData/style.css's `#unity-canvas { background: BACKGROUND_COLOR }`,
+         which matches at equal specificity and would otherwise hide the backdrop. */
       #unity-canvas {
         display: block;
         position: absolute;
-        background: transparent;
+        background: transparent !important;
       }
       #unity-logo {
         position: relative;
