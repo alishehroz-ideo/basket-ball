@@ -23,7 +23,10 @@
            blur, which is far too expensive while the wasm is downloading. `cover`,
            never `100% 100%`: cover crops, stretch distorts in a letterboxed viewport.
            #0e0e12 stays underneath as the fallback until the JPG lands, and is what
-           paints the letterbox bars. */
+           paints the letterbox bars.
+           TAKEN BACK OFF when the game starts — see the container teardown beside the
+           killEl() calls below. Because this background paints the letterbox bars,
+           leaving the image set would keep it on screen for the whole session. */
         background: #0e0e12 url('TemplateData/loading-bg.jpg') center / cover no-repeat;
       }
       /* Canvas is positioned by JS (letterbox). Must stay TRANSPARENT so the backdrop
@@ -304,6 +307,17 @@
           killEl("#unity-progress-bar-empty");
           killEl("#unity-progress-percent");
           killEl("#unity-loading-bar");
+
+          // The backdrop is a LOADING backdrop, so it comes down with the rest of the loading UI.
+          // #unity-container is the FULL VIEWPORT and the canvas is letterboxed inside it, so that
+          // background is also what paints the LETTERBOX BARS — leaving the image set keeps a band
+          // of blurred art above and below the game for the whole session, with a visible seam at
+          // the canvas edge. killEl() above tears down the spinner, the logo and the bar; nothing
+          // clears the container. Harmless while this was a flat colour, not harmless once it
+          // became a picture. Must match GROUND in Tools/bake_loading_bg.py and the fallback in
+          // the #unity-container rule near the top of this file.
+          var container = document.querySelector("#unity-container");
+          if (container) container.style.background = "#0e0e12";
 
           resizeCanvas();
 
