@@ -144,7 +144,7 @@
       // fire-and-forget: nothing here awaits, so the Unity download is never delayed, and
       // every failure path falls back to the static TemplateData/game-icon.jpg.
       (function loadTenantIcon() {
-        var DEFAULT_API_BASE = "https://api.g-b.store";   // production; staging passes ?apiBase=
+        var DEFAULT_API_BASE = "https://api.g-b.store";   // production; staging builds flip this to api.staging.g-b.store
         var DEFAULT_GAME_ID  = "BASKET_BALL";                     // fallback only; ?gameId= from URL wins
         var FETCH_TIMEOUT_MS = 4000;
 
